@@ -473,6 +473,7 @@
       name: autofs
       enabled: false
   when:
+      - not ubuntu2004cis_skip_service_checks|bool
       - not ubuntu2004cis_allow_autofs
       - autofs_service_status.stdout == "loaded"
       - ubuntu2004cis_rule_1_1_23
@@ -1054,7 +1055,8 @@
   apt:
       upgrade: dist
   when:
-      - ubuntu2004cis_apply_upgrades
+    - not ubuntu2004cis_offline
+    - ubuntu2004cis_apply_upgrades
   tags:
       - level1
       - notscored
