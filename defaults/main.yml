@@ -4,7 +4,7 @@ ubuntu2004cis_offline: false
 
 ubuntu2004cis_skip_for_travis: false
 
-ubuntu200404cis_skip_service_checks: false
+ubuntu2004cis_skip_service_checks: false
 
 ubuntu2004cis_notauto: false
 ubuntu2004cis_custom: false
