@@ -137,7 +137,7 @@
             dest: /etc/at.deny
             state: absent
         when:
-          - ubuntu1804cis_rule_5_1_9_1
+          - ubuntu2004cis_rule_5_1_9_1
 
       - name: "SCORED | 5.1.9.2 | PATCH | Ensure at is restricted to authorized users"
         template:
