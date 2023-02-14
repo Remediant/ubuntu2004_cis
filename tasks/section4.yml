@@ -114,7 +114,7 @@
         lineinfile:
             dest: /etc/audit/auditd.conf
             regexp: "^space_left_action"
-            line: "space_left_action = email"
+            line: "space_left_action = {{ ubuntu2004cis_auditd['space_left_action'] }}"
             state: present
             create: yes
         notify:
@@ -294,7 +294,7 @@
   block:
 
       - name: "SCORED | 4.1.11 | PATCH | Get list of setuid/setguid binaries"
-        shell: for i in  $(df | grep '^/dev' | awk '{ print $NF }'); do find $i -xdev -type f -perm -4000 -o -type f -perm -2000 2>/dev/null; done
+        shell: for i in  $(df | grep '^/dev' | awk '{ print $NF }'); do find $i -xdev -type f -perm -4000 -o -type f -perm -2000 2>/dev/null | grep -v '/var/lib/docker'; done
         register: priv_procs
         changed_when: false
         check_mode: false
@@ -565,17 +565,50 @@
       - rule_4.2.2.3
 
 - name: "SCORED | 4.2.3 | PATCH | Ensure permissions on all logfiles are configured"
-  command: find /var/log -type f -exec chmod g-wx,o-rwx {} +
-  changed_when: false
-  failed_when: false
+  block:
+    - name: "SCORED | 4.2.3.1 | PATCH | Identify logrotate configuration files"
+      find:
+        paths: "/etc/logrotate.d"
+        patterns: "*"
+      register: logrotate_confs
+
+    - name: "SCORED | 4.2.3.1 | PATCH | Ensure logrotate permissions are configured"
+      replace:
+        path: "{{ item.path }}"
+        regexp: '(?P<begin>^\s+create\s+)[0-9]{3,}(\s+.*)?$'
+        replace: '\g<begin>0640\2'
+        backup: no
+      with_items:
+        - '{{ logrotate_confs.files + [{"path": "/etc/logrotate.conf"}] }}'
+
+    - name: "SCORED | 4.2.3.2 | PATCH | Ensure logrotate permissions configured for apt history"
+      lineinfile:
+        dest: /etc/logrotate.d/apt
+        insertafter: '\/var\/log\/apt\/history\.log'
+        regexp: '^\s+create\s\d+\s\w+\s\w+$'
+        line: "  create 0640 root root"
+        state: present
+
+    - name: "SCORED | 4.2.3.3 | PATCH | Ensure tmpfiles permissions are configured"
+      replace:
+        path: /usr/lib/tmpfiles.d/var.conf
+        regexp: '(?P<begin>^\w\s\/var\/log\/\w+\s)[0-9]{3,}(\s+.*)?$'
+        replace: '\g<begin>0640\2'
+        backup: no
+
+    - name: "SCORED | 4.2.3.4 | PATCH | Ensure permissions on all logfiles in directory are updated"
+      command: find /var/log -type f -exec chmod g-wx,o-rwx {} +
+      changed_when: false
+      failed_when: false
+
   when:
-      - ubuntu2004cis_rule_4_2_3
+    - ubuntu2004cis_rule_4_2_3
   tags:
-      - level1
-      - scored
-      - patch
-      - syslog
-      - rule_4.2.3
+    - level1
+    - scored
+    - patch
+    - syslog
+    - rule_4.2.3
 
 - name: "NOTSCORED | 4.3 | PATCH | Ensure logrotate is configured"
   block:

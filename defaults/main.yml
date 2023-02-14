@@ -1,8 +1,13 @@
 ---
 # defaults file for Ubuntu2004-CIS
+ubuntu2004cis_offline: false
+
 ubuntu2004cis_skip_for_travis: false
 
+ubuntu2004cis_skip_service_checks: false
+
 ubuntu2004cis_notauto: false
+ubuntu2004cis_custom: false
 ubuntu2004cis_section1: true
 ubuntu2004cis_section2: true
 ubuntu2004cis_section3: true
@@ -213,6 +218,7 @@ ubuntu2004cis_rule_5_1_6: true
 ubuntu2004cis_rule_5_1_7: true
 ubuntu2004cis_rule_5_1_8: true
 ubuntu2004cis_rule_5_1_9: true
+ubuntu2004cis_rule_5_1_9_1: true
 ubuntu2004cis_rule_5_2_1: true
 ubuntu2004cis_rule_5_2_2: true
 ubuntu2004cis_rule_5_2_3: true
@@ -239,6 +245,7 @@ ubuntu2004cis_rule_5_3_1: true
 ubuntu2004cis_rule_5_3_2: true
 ubuntu2004cis_rule_5_3_3: true
 ubuntu2004cis_rule_5_3_4: true
+ubuntu2004cis_rule_5_3_5: true
 ubuntu2004cis_rule_5_4_1_1: true
 ubuntu2004cis_rule_5_4_1_2: true
 ubuntu2004cis_rule_5_4_1_3: true
@@ -249,7 +256,7 @@ ubuntu2004cis_rule_5_4_3: true
 ubuntu2004cis_rule_5_4_4: true
 ubuntu2004cis_rule_5_4_5: true
 ubuntu2004cis_rule_5_5: true
-ubuntu2004cis_rule_5_6: false
+ubuntu2004cis_rule_5_6: true
 
 # Section 6 rules
 ubuntu2004cis_rule_6_1_1: true
@@ -324,6 +331,14 @@ ubuntu2004cis_is_router: false
 # IPv6 required
 ubuntu2004cis_ipv6_required: true
 
+# Unusued?
+# TCP Ports to open for Firewall
+ubuntu2004cis_firewall_open_tcp_ports: []
+
+# Unusued?
+# UDP Ports to open for Firewall
+ubuntu2004cis_firewall_open_udp_ports: []
+
 # AIDE
 ubuntu2004cis_config_aide: true
 # AIDE cron settings
@@ -355,14 +370,14 @@ ubuntu2004cis_time_synchronization: chrony
 # ubuntu2004cis_time_synchronization: ntp
 
 ubuntu2004cis_time_synchronization_servers:
-  - uri: "0.pool.ntp.org"
-    config: "minpoll 8"
-  - uri: "1.pool.ntp.org"
-    config: "minpoll 8"
-  - uri: "2.pool.ntp.org"
-    config: "minpoll 8"
-  - uri: "3.pool.ntp.org"
-    config: "minpoll 8"
+  - uri:    "ntp.ubuntu.com"
+    config: "iburst maxsources 4"
+  - uri:    "0.ubuntu.pool.ntp.org"
+    config: "iburst maxsources 1"
+  - uri:    "1.ubuntu.pool.ntp.org"
+    config: "iburst maxsources 1"
+  - uri:    "2.ubuntu.pool.ntp.org"
+    config: "iburst maxsources 2"
 
 # 3.3 TCP Wrappers
 ubuntu2004cis_setup_tcp_wrappers: false
@@ -386,6 +401,7 @@ ubuntu2004cis_warning_banner: |
 
 ## Section 4 Vars
 ubuntu2004cis_auditd:
+  space_left_action: halt
   admin_space_left_action: halt
   max_log_file_action: keep_logs
   max_audit_log_file_size: 10
@@ -428,10 +444,14 @@ ubuntu2004cis_pass:
   warn_age: 7
   inactive: 30
   history: 5
+  retry: 3
 
 ubuntu2004cis_password_change_date_in_future_action: expire # lock
 
 ubuntu2004cis_shell_timeout: 900
+
+ubuntu2004cis_restricted_consoles_regex: "^((?!.*).)*$"   # default will not match anything and therefore not remove
+
 # Syslog system
 ubuntu2004cis_syslog: rsyslog
 # ubuntu2004cis_syslog: syslog-ng
@@ -449,6 +469,9 @@ ubuntu2004cis_apply_upgrades: true
 prelim_check_package_command:
   RedHat: rpm -q
   Debian: dpkg -V
+iptables_persistent_package:
+  RedHat: iptables-services
+  Debian: iptables-persistent
 auditd_package:
   RedHat: audit
   Debian: auditd
@@ -475,7 +498,7 @@ tmp_mount_file:
   Debian: /usr/share/systemd/tmp.mount
 tmp_mount_options:
   RedHat: mode=1777,strictatime,noexec,nodev,nosuid
-  Debian: mode=1777,strictatime,nodev,nosuid
+  Debian: mode=1777,strictatime,noexec,nodev,nosuid
 chrony_config_file:
   RedHat: /etc/chrony.conf
   Debian: /etc/chrony/chrony.conf

@@ -109,12 +109,12 @@
 
 - name: "SCORED | 5.1.8 | PATCH | Ensure cron is restricted to authorized users"
   block:
-      - name: "SCORED | 5.1.8 | PATCH | Ensure cron is restricted to authorized users"
+      - name: "SCORED | 5.1.8.1 | PATCH | Ensure cron is restricted to authorized users"
         file:
             dest: /etc/cron.deny
             state: absent
 
-      - name: "SCORED | 5.1.8 | PATCH | Ensure cron is restricted to authorized users"
+      - name: "SCORED | 5.1.8.2 | PATCH | Ensure cron is restricted to authorized users"
         template:
             src: cron.allow.j2
             dest: /etc/cron.allow
@@ -132,12 +132,14 @@
 
 - name: "SCORED | 5.1.9 | PATCH | Ensure at is restricted to authorized users"
   block:
-      - name: "SCORED | 5.1.9 | PATCH | Ensure at is restricted to authorized users"
+      - name: "SCORED | 5.1.9.1 | PATCH | Ensure at is restricted to authorized users"
         file:
             dest: /etc/at.deny
             state: absent
+        when:
+          - ubuntu2004cis_rule_5_1_9_1
 
-      - name: "SCORED | 5.1.8 | PATCH | Ensure at is restricted to authorized users"
+      - name: "SCORED | 5.1.9.2 | PATCH | Ensure at is restricted to authorized users"
         template:
             src: at.allow.j2
             dest: /etc/at.allow
@@ -548,6 +550,12 @@
 
 - name: "SCORED | 5.3.1 | PATCH | Ensure password creation requirements are configured"
   block:
+      - name: "SCORED | 5.3.1 | PATCH | Ensure cracklib-runtime is installed"
+        apt:
+            name: cracklib-runtime
+            state: present
+            install_recommends: false
+
       - name: "SCORED | 5.3.1 | PATCH | Ensure lipam-pwquality is installed"
         apt:
             name: libpam-pwquality
@@ -593,7 +601,9 @@
 - name: "SCORED | 5.3.3 | PATCH | Ensure password reuse is limited"
   lineinfile:
       dest: /etc/pam.d/common-password
-      line: "password required pam_pwhistory.so remember={{ ubuntu2004cis_pass['history'] }}"
+      insertbefore: "^password\\s+.+\\s+pam_unix\\.so"
+      regexp: "password\\s+\\w+\\s+pam_pwhistory\\.so\\s+remember.*"
+      line: "password        requisite                       pam_pwhistory.so use_authtok remember={{ ubuntu2004cis_pass['history'] }}"
   when:
       - ubuntu2004cis_rule_5_3_3
   tags:
@@ -613,6 +623,19 @@
       - scored
       - patch
       - rule_5.3.4
+
+- name: "SCORED | 5.3.5 | PATCH | Ensure password creation retry is limited"
+  lineinfile:
+      dest: /etc/pam.d/common-password
+      regexp: "password\\s+\\w+\\s+pam_pwquality\\.so\\s+retry.*"
+      line: "password        requisite                       pam_pwquality.so retry={{ ubuntu2004cis_pass['retry'] }}"
+  when:
+      - ubuntu2004cis_rule_5_3_5
+  tags:
+      - level1
+      - scored
+      - patch
+      - rule_5.3.5
 
 - name: "SCORED | 5.4.1.1 | PATCH | Ensure password expiration is 365 days or less"
   lineinfile:
@@ -796,17 +819,18 @@
       - rule_5.4.5
       - scored
 
-- name: "NOTSCORED | 5.5 | PATCH | Ensure root login is restricted to system console"
-  command: /bin/true
-  changed_when: false
+- name: "SCORED | 5.6 | PATCH | Ensure root login is restricted to system console"
+  lineinfile:
+      state: absent
+      dest: /etc/securetty
+      regexp: "{{ ubuntu2004cis_restricted_consoles_regex }}"
   when:
-      - ubuntu2004cis_rule_5_5
+      - ubuntu2004cis_rule_5_6
   tags:
       - level1
       - patch
-      - rule_5.5
-      - notscored
-      - notimplemented
+      - rule_5.6
+      - scored
 
 - name: "SCORED | 5.6 | PATCH | Ensure access to the su command is restricted"
   lineinfile:
@@ -814,6 +838,17 @@
       dest: /etc/pam.d/su
       regexp: '^(#)?auth\s+required\s+pam_wheel\.so'
       line: "auth           required        pam_wheel.so use_uid"
+  when:
+      - ubuntu2004cis_rule_5_6
+  tags:
+      - level1
+      - patch
+      - rule_5.6
+      - scored
+
+- name: "SCORED | 5.6 | PATCH | Ensure access to the su command is restricted - wheel group is present"
+  group:
+      name: wheel
   when:
       - ubuntu2004cis_rule_5_6
   tags:
