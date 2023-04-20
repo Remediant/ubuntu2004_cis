@@ -10,3 +10,10 @@
   file:
     path: /etc/sysctl.conf
     mode: 0600
+
+- name: "NOTSCORED | CUSTOM | Clear exiting audit rules"
+  shell: "find /etc/audit/rules.d -name ubuntu1804cis* -delete"
+  args:
+    executable: /bin/bash
+  changed_when: false
+  check_mode: false
