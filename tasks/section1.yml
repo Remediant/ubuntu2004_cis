@@ -633,6 +633,7 @@
     content: |
       !/secureone/data
       !/var/lib/docker
+      !/var/log
   when:
       - ubuntu2004cis_config_aide
       - ubuntu2004cis_rule_1_4_1
