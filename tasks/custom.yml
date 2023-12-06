@@ -17,3 +17,10 @@
     executable: /bin/bash
   changed_when: false
   check_mode: false
+
+- name: "NOTSCORED | CUSTOM | Fix AAD SSH Login ends Match User block"
+  replace:
+    path: /etc/ssh/sshd_config
+    regexp: '(Match User[\s\S]*AuthorizedKeysCommand[\s\S]*aad_certhandler[\s\S]*AuthorizedKeysCommandUser root\n(?!Match all))'
+    replace: '\1Match all\n'
+    validate: '/usr/sbin/sshd -f %s -t'
